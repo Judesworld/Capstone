@@ -51,6 +51,7 @@ def getData(num, multiple):
 
         return [X_train, y_train, X_test, y_test], classes
 
+# Normalize all the data 
 def normalizeData(data, multiple):
     output = []
 
@@ -84,7 +85,6 @@ def normalizeData(data, multiple):
         output = [normalized_X_train, data[1], normalized_X_test, data[3]]
 
     return output
-
 
 
 # Helper Function - Generate subsets
@@ -284,10 +284,10 @@ if __name__ == "__main__":
     # Test Loss: 0.550
     # Test Accuracy: 0.747
 
-    # start = time.time()
-    # train_efficientNet(X_train, y_train, X_test, y_test, False)
-    # end = time.time()
-    # print(end - start)
+    start = time.time()
+    train_efficientNet(X_train, y_train, X_test, y_test, False)
+    end = time.time()
+    print(end - start)
     
 
     #### Run the MobileNet ####

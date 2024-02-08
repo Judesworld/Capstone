@@ -6,14 +6,49 @@ from keras.applications import InceptionV3, ResNet50, EfficientNetB0
 from keras.applications.mobilenet import MobileNet
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.models import Model, Sequential
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import cv2 as cv
 import numpy as np
 
+# Helper Function
 def resize_images(data, width, height):
     resized_data = np.empty((data.shape[0], height, width, data.shape[3]))
     for i, img in enumerate(data):
         resized_data[i] = cv.resize(img, (width, height))
     return resized_data
+
+def calculate_specificity_sensitivity_f1(y_true, y_pred):
+    # Calculate confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+
+    # True negatives are at cm[0,0], true positives at cm[1,1]
+    # False negatives are at cm[1,0], false positives at cm[0,1]
+    TN = cm[0, 0]
+    FP = cm[0, 1]
+    FN = cm[1, 0]
+    TP = cm[1, 1]
+
+    # Calculate specificity and sensitivity (recall)
+    specificity = TN / (TN + FP)
+    sensitivity = TP / (TP + FN)  # This is recall
+
+    # Use sklearn to calculate precision, recall, and F1 score
+    specificity, sensitivity, f1_score, _ = precision_recall_fscore_support(y_true, y_pred, average='micro')
+
+    return specificity, sensitivity, f1_score
+
+def evaluate_model_performance(model, X_test, y_test):
+    # Predict classes with the model
+    y_pred = model.predict(X_test)
+    y_pred_classes = np.argmax(y_pred, axis=1)
+    y_true_classes = np.argmax(y_test, axis=1)
+
+    # Calculate metrics
+    specificity, sensitivity, f1_score = calculate_specificity_sensitivity_f1(y_true_classes, y_pred_classes)
+    print(f"Specificity: {specificity}")
+    print(f"Sensitivity (Recall): {sensitivity}")
+    print(f"F1 Score: {f1_score}")
+
 
 def train_inception_v3(X_train, y_train, X_test, y_test, resize, width=299, height=299):
     base_model = InceptionV3(weights='imagenet', include_top=False)
@@ -40,6 +75,10 @@ def train_inception_v3(X_train, y_train, X_test, y_test, resize, width=299, heig
     loss, accuracy = model.evaluate(X_test, y_test)
     print(f'Test loss: {loss}')
     print(f'Test accuracy: {accuracy}')
+
+    # Evaluate additional metrics
+    evaluate_model_performance(model, X_test, y_test)
+    return 
 
 def train_resnet50(X_train, y_train, X_test, y_test, resize, width=224, height=224):
     
@@ -102,6 +141,8 @@ def train_efficientNet(X_train, y_train, X_test, y_test, resize, width=224, heig
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
     print(f'Test loss: {test_loss}')
     print(f'Test accuracy: {test_acc}')
+
+    evaluate_model_performance(model, X_test, y_test)
 
     return
 
