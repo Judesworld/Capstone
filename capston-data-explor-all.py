@@ -86,8 +86,7 @@ def normalizeData(data, multiple):
 
     return output
 
-
-# Helper Function - Generate subsets
+# Helper Functions - Generate subsets
 def create_subsets(classes):
     subsets = {}
 
@@ -192,6 +191,7 @@ def display_images_in_grid(subsets, num_images, rows, cols):
 
         cv.destroyAllWindows()
 
+# Visualize images
 def visualize_results(result, num_images, rows, cols):
     if isinstance(result, list):  # Multiple tasks scenario
         for task_subsets in result:
@@ -205,6 +205,54 @@ def resize_images(data, width, height):
         resized_data[i] = cv.resize(img, (width, height))
     return resized_data
 
+def run_experiment(X_train, y_train, X_test, y_test, train_sizes, split_func, model):
+    """
+    Runs model training experiments over different train sizes using specified split function.
+
+    Parameters:
+    - X_train, y_train: Training data and labels.
+    - X_test, y_test: Test data and labels.
+    - train_sizes: List of integers representing the percentages of data to use.
+    - split_func: Function to use for splitting the data (e.g., filter_data_rand or filter_data_strat).
+
+    Returns:
+    - A dictionary containing training times keyed by the train size percentage.
+    """
+    training_times = {}
+    test_accuracies = {}
+    test_losses = {}
+    specificity_scores = {}
+    sensitivity_scores = {}
+    f1_scores = {}
+
+
+    for size in train_sizes:
+        # Split the dataset according to the specified size
+        X_train_subset, y_train_subset = split_func(X_train, y_train, size)
+
+        # Record the start time of training
+        start_time = time.time()
+
+        # Train the model using the subset of training data
+        # Adjust this line to match the signature of your actual training function
+        test_acc, test_loss, specificity, sensitivity, f1 = model(X_train_subset,
+                                                                y_train_subset, 
+                                                                X_test, 
+                                                                y_test, 
+                                                                True)
+
+        # Record the end time of training
+        end_time = time.time()
+
+        # Calculate and store the training time
+        training_times[size] = end_time - start_time
+        test_accuracies[size] = test_acc
+        test_losses[size] = test_loss
+        specificity_scores[size] = specificity
+        sensitivity_scores[size] = sensitivity
+        f1_scores[size] = f1
+
+    return training_times, test_accuracies, test_losses, specificity_scores, sensitivity_scores, f1_scores
 
 if __name__ == "__main__":
     # Outline 
@@ -252,23 +300,55 @@ if __name__ == "__main__":
     from models_utils import train_mobileNet
     import time
 
+    # There are 1226 training images
+    # There are 146 test images
     X_train = data[0]
     y_train = data[1]
     X_test = data[2]
     y_test = data[3]
 
-    #### Run the InceptionV3 ####
+    from data_filtration import filter_data_rand, filter_data_strat
+
+    print(len(X_train))
+    print(len(y_train))
+
+    # Reduce data by % randomly
+    # X_train_rand, y_train_rand = filter_data_rand(X_train, y_train, 50)
+    # print(len(X_train_rand))
+    # print(len(y_train_rand))
+
+    # Reduce training data by % while preserving the classes ratio
+    # X_train_strat, y_train_strat = filter_data_strat(X_train, y_train, 70)
+    # print(len(X_train_strat))
+    # print(len(y_train_strat))
+
+    
+    ################ Run the InceptionV3 ################
     # Time: 670.69 == 11.18 minutes
     # Test Loss: 1.349
     # Test Accuracy: 0.534
 
+    # Complete data set
     # start = time.time()
     # train_inception_v3(X_train, y_train, X_test, y_test, True)
     # end = time.time()
     # print(end - start)
 
+    #### SPLITS & Testing ####
+    training_sizes = [20, 40, 50, 60, 80]
 
-    #### Run the ResNet-50 ####
+    # Run using random function
+    # results_v3_1 = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_rand,
+    #                            train_inception_v3)
+    
+    # results_v3_2 = run_experiment(X_train, y_train, X_test, y_test, training_sizes, 
+    #                            filter_data_strat, 
+    #                            train_inception_v3)
+
+
+
+    ################ Run the ResNet-50 ################
     # Time: 770.38s == 12.84 minutes
     # Test Loss: 2.176
     # Test Accuracy: 0.685
@@ -278,19 +358,42 @@ if __name__ == "__main__":
     # end = time.time()
     # print(end - start)
 
+    #### SPLITS & Testing ####
+    # results_rn50_1 = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_rand,
+    #                            train_resnet50)
+    
+    # results_rn50_2 = run_experiment(X_train, y_train, X_test, y_test, training_sizes, 
+    #                            filter_data_strat, 
+    #                            train_resnet50)
 
-    #### Run the EfficientNetB0 ####
+
+    ################ Run the EfficientNetB0 ################
     # Time: 135.13 == 2.25 minutes
     # Test Loss: 0.550
     # Test Accuracy: 0.747
 
-    start = time.time()
-    train_efficientNet(X_train, y_train, X_test, y_test, False)
-    end = time.time()
-    print(end - start)
+    # start = time.time()
+    # train_efficientNet(X_train, y_train, X_test, y_test, False)
+    # end = time.time()
+    # print(end - start)
     
+    #### SPLITS & Testing ####
+    (training_times1, test_accuracies1, test_losses1, 
+    specificity_scores1, sensitivity_scores1, 
+    f1_scores1) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+                               filter_data_rand,
+                               train_efficientNet)
+    
+    (training_times2, test_accuracies2, test_losses2, 
+    specificity_scores2, sensitivity_scores2, 
+    f1_scores2) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+                               filter_data_strat,
+                               train_efficientNet)
+    
+   
 
-    #### Run the MobileNet ####
+    ################ Run the MobileNet ################
     # Time: 166.69 == 2.78 minutes
     # Test Loss: 3.840
     # Test Accuracy: 0.644

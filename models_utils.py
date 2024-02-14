@@ -7,16 +7,20 @@ from keras.applications.mobilenet import MobileNet
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.models import Model, Sequential
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
-import cv2 as cv
 import numpy as np
+import cv2 as cv
 
-# Helper Function
+
+# Re-formatting images
 def resize_images(data, width, height):
     resized_data = np.empty((data.shape[0], height, width, data.shape[3]))
     for i, img in enumerate(data):
         resized_data[i] = cv.resize(img, (width, height))
     return resized_data
 
+
+
+# Evaluation metrics / functions
 def calculate_specificity_sensitivity_f1(y_true, y_pred):
     # Calculate confusion matrix
     cm = confusion_matrix(y_true, y_pred)
@@ -50,6 +54,8 @@ def evaluate_model_performance(model, X_test, y_test):
     print(f"F1 Score: {f1_score}")
 
 
+# Models 
+# Using the inception v3 model 
 def train_inception_v3(X_train, y_train, X_test, y_test, resize, width=299, height=299):
     base_model = InceptionV3(weights='imagenet', include_top=False)
     x = base_model.output
@@ -80,6 +86,7 @@ def train_inception_v3(X_train, y_train, X_test, y_test, resize, width=299, heig
     evaluate_model_performance(model, X_test, y_test)
     return 
 
+# Using the resnet 50 model 
 def train_resnet50(X_train, y_train, X_test, y_test, resize, width=224, height=224):
     
     # Implement the ResNet-50 
@@ -118,6 +125,7 @@ def train_resnet50(X_train, y_train, X_test, y_test, resize, width=224, height=2
     print(f'Test accuracy: {accuracy}')
     return 
 
+# Using the efficientNetB0
 def train_efficientNet(X_train, y_train, X_test, y_test, resize, width=224, height=224):
     num_classes = 3
 
@@ -146,7 +154,9 @@ def train_efficientNet(X_train, y_train, X_test, y_test, resize, width=224, heig
 
     return
 
+# Using the mobile net
 def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=224):
+    
     base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 
     x = base_model.output
@@ -180,3 +190,4 @@ def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=
     print(f'Test loss: {loss}')
     print(f'Test accuracy: {accuracy}')
     return 
+
