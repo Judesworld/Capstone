@@ -49,9 +49,11 @@ def evaluate_model_performance(model, X_test, y_test):
 
     # Calculate metrics
     specificity, sensitivity, f1_score = calculate_specificity_sensitivity_f1(y_true_classes, y_pred_classes)
-    print(f"Specificity: {specificity}")
-    print(f"Sensitivity (Recall): {sensitivity}")
-    print(f"F1 Score: {f1_score}")
+    # print(f"Specificity: {specificity}")
+    # print(f"Sensitivity (Recall): {sensitivity}")
+    # print(f"F1 Score: {f1_score}")
+
+    return specificity, sensitivity, f1_score
 
 
 # Models 
@@ -78,13 +80,18 @@ def train_inception_v3(X_train, y_train, X_test, y_test, resize, width=299, heig
 
     model.fit(X_train, y_train, batch_size=32, epochs=10, callbacks=[lr_reduction, early_stopping], validation_data=(X_test, y_test))
 
-    loss, accuracy = model.evaluate(X_test, y_test)
-    print(f'Test loss: {loss}')
-    print(f'Test accuracy: {accuracy}')
+    test_loss, test_acc = model.evaluate(X_test, y_test)
+    # print(f'Test loss: {test_loss}')
+    # print(f'Test accuracy: {test_acc}')
 
     # Evaluate additional metrics
-    evaluate_model_performance(model, X_test, y_test)
-    return 
+    specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+    return test_acc, test_loss, specificity, sensitivity, f1
+
+
+
+
+
 
 # Using the resnet 50 model 
 def train_resnet50(X_train, y_train, X_test, y_test, resize, width=224, height=224):
@@ -125,6 +132,11 @@ def train_resnet50(X_train, y_train, X_test, y_test, resize, width=224, height=2
     print(f'Test accuracy: {accuracy}')
     return 
 
+
+
+
+  
+
 # Using the efficientNetB0
 def train_efficientNet(X_train, y_train, X_test, y_test, resize, width=224, height=224):
     num_classes = 3
@@ -146,13 +158,17 @@ def train_efficientNet(X_train, y_train, X_test, y_test, resize, width=224, heig
               loss='categorical_crossentropy',
               metrics=['accuracy'])
     history = model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test))
+
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
-    print(f'Test loss: {test_loss}')
-    print(f'Test accuracy: {test_acc}')
+    # print(f'Test loss: {test_loss}')
+    # print(f'Test accuracy: {test_acc}')
 
-    evaluate_model_performance(model, X_test, y_test)
+    specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+    return test_acc, test_loss, specificity, sensitivity, f1
 
-    return
+
+
+
 
 # Using the mobile net
 def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=224):
@@ -186,8 +202,10 @@ def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=
     # Continue training
     model.fit(X_train, y_train, batch_size=32, epochs=10, validation_data=(X_test, y_test))
 
-    loss, accuracy = model.evaluate(X_test, y_test)
-    print(f'Test loss: {loss}')
-    print(f'Test accuracy: {accuracy}')
-    return 
+    test_loss, test_acc = model.evaluate(X_test, y_test)
+    # print(f'Test loss: {test_loss}')
+    # print(f'Test accuracy: {test_acc}')
+
+    specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+    return test_acc, test_loss, specificity, sensitivity, f1
 

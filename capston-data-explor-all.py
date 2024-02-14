@@ -308,6 +308,7 @@ if __name__ == "__main__":
     y_test = data[3]
 
     from data_filtration import filter_data_rand, filter_data_strat
+    from visualize_data import visualize_results
 
     print(len(X_train))
     print(len(y_train))
@@ -322,8 +323,15 @@ if __name__ == "__main__":
     # print(len(X_train_strat))
     # print(len(y_train_strat))
 
+    #####
+    import pickle
+    import os
+    training_sizes = [20, 40, 50, 60, 80]
+    ####
     
+    #####################################################
     ################ Run the InceptionV3 ################
+    #####################################################
     # Time: 670.69 == 11.18 minutes
     # Test Loss: 1.349
     # Test Accuracy: 0.534
@@ -334,21 +342,89 @@ if __name__ == "__main__":
     # end = time.time()
     # print(end - start)
 
-    #### SPLITS & Testing ####
-    training_sizes = [20, 40, 50, 60, 80]
-
-    # Run using random function
-    # results_v3_1 = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    # (training_times_incept1, test_accuracies_incept1, test_losses_incept1, 
+    # specificity_scores_incept1, sensitivity_scores_incept1, 
+    # f1_scores_incept1) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
     #                            filter_data_rand,
     #                            train_inception_v3)
     
-    # results_v3_2 = run_experiment(X_train, y_train, X_test, y_test, training_sizes, 
-    #                            filter_data_strat, 
+    # (training_times_incept2, test_accuracies_incept2, test_losses_incept2, 
+    # specificity_scores_incept2, sensitivity_scores_incept2, 
+    # f1_scores_incept2) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_strat,
     #                            train_inception_v3)
+    
+    # results1_v3 = {
+    # 'training_times': training_times_incept1,
+    # 'test_accuracies': test_accuracies_incept1,
+    # 'test_losses': test_losses_incept1,
+    # 'sensitivity': sensitivity_scores_incept1,
+    # 'specificity': specificity_scores_incept1,
+    # 'f1_scores': f1_scores_incept1
+    # }
+
+    # results2_v3 = {
+    #     'training_times': training_times_incept2,
+    #     'test_accuracies': test_accuracies_incept2,
+    #     'test_losses': test_losses_incept2,
+    #     'sensitivity': sensitivity_scores_incept2,
+    #     'specificity': specificity_scores_incept2,
+    #     'f1_scores': f1_scores_incept2
+    # }
+
+    # # Step 1: Combine both sets of results into a single dictionary
+    # combined_results = {'results1': results1_v3, 'results2': results2_v3}
+
+    # # Step 2: Save the combined results, overwriting the existing file
+    # with open('results-inceptionv3-1.pkl', 'wb') as f:
+    #     pickle.dump(combined_results, f)
+
+    """
+    Uncomment to display results from pickle file
+    """
+    # Get results from mobile net pickle file
+    with open('results-inceptionv3-1.pkl', 'rb') as f:
+        loaded_results = pickle.load(f)
+
+    results1_v3 = loaded_results['results1']
+    results2_v3 = loaded_results['results2']
+
+    training_times_incept1 = results1_v3['training_times']
+    test_accuracies_incept1 = results1_v3['test_accuracies']
+    test_losses_incept1 = results1_v3['test_losses']
+    sensitivity_scores_incept1 = results1_v3['sensitivity']
+    specificity_scores_incept1 = results1_v3['specificity']
+    f1_scores_incept1 = results1_v3['f1_scores']
+
+    training_times_incept2 = results2_v3['training_times']
+    test_accuracies_incept2 = results2_v3['test_accuracies']
+    test_losses_incept2 = results2_v3['test_losses']
+    sensitivity_scores_incept2 = results2_v3['sensitivity']
+    specificity_scores_incept2 = results2_v3['specificity']
+    f1_scores_incept2 = results2_v3['f1_scores']
+
+    # Pass the extracted metrics to the visualize_results function
+    visualize_results(training_sizes, 
+                    training_times_incept1, 
+                    test_accuracies_incept1, 
+                    test_losses_incept1, 
+                    sensitivity_scores_incept1, 
+                    specificity_scores_incept1, 
+                    f1_scores_incept1)
+    
+    # Pass the extracted metrics to the visualize_results function
+    visualize_results(training_sizes, 
+                    training_times_incept2, 
+                    test_accuracies_incept2, 
+                    test_losses_incept2, 
+                    sensitivity_scores_incept2, 
+                    specificity_scores_incept2, 
+                    f1_scores_incept2)
 
 
-
+    ###################################################
     ################ Run the ResNet-50 ################
+    ###################################################
     # Time: 770.38s == 12.84 minutes
     # Test Loss: 2.176
     # Test Accuracy: 0.685
@@ -367,8 +443,9 @@ if __name__ == "__main__":
     #                            filter_data_strat, 
     #                            train_resnet50)
 
-
+    ########################################################
     ################ Run the EfficientNetB0 ################
+     #######################################################
     # Time: 135.13 == 2.25 minutes
     # Test Loss: 0.550
     # Test Accuracy: 0.747
@@ -378,22 +455,96 @@ if __name__ == "__main__":
     # end = time.time()
     # print(end - start)
     
-    #### SPLITS & Testing ####
-    (training_times1, test_accuracies1, test_losses1, 
-    specificity_scores1, sensitivity_scores1, 
-    f1_scores1) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
-                               filter_data_rand,
-                               train_efficientNet)
+    # ### SPLITS & Testing ####
+    # (training_times1, test_accuracies1, test_losses1, 
+    # specificity_scores1, sensitivity_scores1, 
+    # f1_scores1) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_rand,
+    #                            train_efficientNet)
     
-    (training_times2, test_accuracies2, test_losses2, 
-    specificity_scores2, sensitivity_scores2, 
-    f1_scores2) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
-                               filter_data_strat,
-                               train_efficientNet)
+    # (training_times2, test_accuracies2, test_losses2, 
+    # specificity_scores2, sensitivity_scores2, 
+    # f1_scores2) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_strat,
+    #                            train_efficientNet)
+    
+    # results1 = {
+    # 'training_times': training_times1,
+    # 'test_accuracies': test_accuracies1,
+    # 'test_losses': test_losses1,
+    # 'sensitivity': sensitivity_scores1,
+    # 'specificity': specificity_scores1,
+    # 'f1_scores': f1_scores1
+    # }
+
+    # results2 = {
+    #     'training_times': training_times2,
+    #     'test_accuracies': test_accuracies2,
+    #     'test_losses': test_losses2,
+    #     'sensitivity': sensitivity_scores2,
+    #     'specificity': specificity_scores2,
+    #     'f1_scores': f1_scores2
+    # }
+
+    # Step 1: Combine both sets of results into a single dictionary
+    # combined_results = {'results1': results1, 'results2': results2}
+
+    # Step 2: Save the combined results, overwriting the existing file
+    # with open('results-effnet-1.pkl', 'wb') as f:
+    #     pickle.dump(combined_results, f)
+    
+    """
+    Uncomment below to open the pickle file and get data
+    """
+    # # Load the results from the pickle file
+    # with open('results-effnet-1.pkl', 'rb') as f:
+    #     loaded_results = pickle.load(f)
+
+    # results1 = loaded_results['results1']
+    # results2 = loaded_results['results2']
+
+    # training_times1 = results1['training_times']
+    # test_accuracies1 = results1['test_accuracies']
+    # test_losses1 = results1['test_losses']
+    # sensitivity_scores1 = results1['sensitivity']
+    # specificity_scores1 = results1['specificity']
+    # f1_scores1 = results1['f1_scores']
+
+    # training_times2 = results2['training_times']
+    # test_accuracies2 = results2['test_accuracies']
+    # test_losses2 = results2['test_losses']
+    # sensitivity_scores2 = results2['sensitivity']
+    # specificity_scores2 = results2['specificity']
+    # f1_scores2 = results2['f1_scores']
+
+    # # Use to rename file relating to efficientNet 
+    # old_file_path = 'experiment_results.pkl'
+    # new_file_path = 'results-effnet-1.pkl'
+    # os.rename(old_file_path, new_file_path)
+
+
+    # Pass the extracted metrics to the visualize_results function
+    # visualize_results(training_sizes, 
+    #                 training_times1, 
+    #                 test_accuracies1, 
+    #                 test_losses1, 
+    #                 sensitivity_scores1, 
+    #                 specificity_scores1, 
+    #                 f1_scores1)
+    
+    # Pass the extracted metrics to the visualize_results function
+    # visualize_results(training_sizes, 
+    #                 training_times2, 
+    #                 test_accuracies2, 
+    #                 test_losses2, 
+    #                 sensitivity_scores2, 
+    #                 specificity_scores2, 
+    #                 f1_scores2)
     
    
-
+    ###################################################
     ################ Run the MobileNet ################
+     ###################################################
     # Time: 166.69 == 2.78 minutes
     # Test Loss: 3.840
     # Test Accuracy: 0.644
@@ -403,10 +554,85 @@ if __name__ == "__main__":
     # end = time.time()
     # print(end - start)
     
-
-
+    # (training_times_incept1, test_accuracies_incept1, test_losses_mbnet1, 
+    # specificity_scores_mbnet1, sensitivity_scores_mbnet1, 
+    # f1_scores_mbnet1) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_rand,
+    #                            train_mobileNet)
     
+    # (training_times_mbnet2, test_accuracies_mbnet2, test_losses_mbnet2, 
+    # specificity_scores_mbnet2, sensitivity_scores_mbnet2, 
+    # f1_scores_mbnet2) = run_experiment(X_train, y_train, X_test, y_test, training_sizes,
+    #                            filter_data_strat,
+    #                            train_mobileNet)
+    
+    # results1_mb = {
+    # 'training_times': training_times_incept1,
+    # 'test_accuracies': test_accuracies_incept1,
+    # 'test_losses': test_losses_mbnet1,
+    # 'sensitivity': sensitivity_scores_mbnet1,
+    # 'specificity': specificity_scores_mbnet1,
+    # 'f1_scores': f1_scores_mbnet1
+    # }
 
+    # results2_mb = {
+    #     'training_times': training_times_mbnet2,
+    #     'test_accuracies': test_accuracies_mbnet2,
+    #     'test_losses': test_losses_mbnet2,
+    #     'sensitivity': sensitivity_scores_mbnet2,
+    #     'specificity': specificity_scores_mbnet2,
+    #     'f1_scores': f1_scores_mbnet2
+    # }
+
+    # # Step 1: Combine both sets of results into a single dictionary
+    # combined_results = {'results1': results1_mb, 'results2': results2_mb}
+
+    # # Step 2: Save the combined results, overwriting the existing file
+    # with open('results-mobileNet-1.pkl', 'wb') as f:
+    #     pickle.dump(combined_results, f)
+    
+    """
+    Uncomment below to open the pickle file and get data
+    """
+
+    # Get results from mobile net pickle file
+    # with open('results-mobileNet-1.pkl', 'rb') as f:
+    #     loaded_results = pickle.load(f)
+
+    # results1_mb = loaded_results['results1']
+    # results2_mb = loaded_results['results2']
+
+    # training_times_incept1 = results1_mb['training_times']
+    # test_accuracies_incept1 = results1_mb['test_accuracies']
+    # test_losses_mbnet1 = results1_mb['test_losses']
+    # sensitivity_scores_mbnet1 = results1_mb['sensitivity']
+    # specificity_scores_mbnet1 = results1_mb['specificity']
+    # f1_scores_mbnet1 = results1_mb['f1_scores']
+
+    # training_times_mbnet2 = results2_mb['training_times']
+    # test_accuracies_mbnet2 = results2_mb['test_accuracies']
+    # test_losses_mbnet2 = results2_mb['test_losses']
+    # sensitivity_scores_mbnet2 = results2_mb['sensitivity']
+    # specificity_scores_mbnet2 = results2_mb['specificity']
+    # f1_scores_mbnet2 = results2_mb['f1_scores']
+
+    # # Pass the extracted metrics to the visualize_results function
+    # visualize_results(training_sizes, 
+    #                 training_times_incept1, 
+    #                 test_accuracies_incept1, 
+    #                 test_losses_mbnet1, 
+    #                 sensitivity_scores_mbnet1, 
+    #                 specificity_scores_mbnet1, 
+    #                 f1_scores_mbnet1)
+    
+    # # Pass the extracted metrics to the visualize_results function
+    # visualize_results(training_sizes, 
+    #                 training_times_mbnet2, 
+    #                 test_accuracies_mbnet2, 
+    #                 test_losses_mbnet2, 
+    #                 sensitivity_scores_mbnet2, 
+    #                 specificity_scores_mbnet2, 
+    #                 f1_scores_mbnet2)
 
 
 
