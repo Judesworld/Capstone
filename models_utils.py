@@ -127,10 +127,12 @@ def train_resnet50(X_train, y_train, X_test, y_test, resize, width=224, height=2
     # Continue training
     model.fit(X_train, y_train, batch_size=32, epochs=10, validation_data=(X_test, y_test))
 
-    loss, accuracy = model.evaluate(X_test, y_test)
-    print(f'Test loss: {loss}')
-    print(f'Test accuracy: {accuracy}')
-    return 
+    test_loss, test_acc = model.evaluate(X_test, y_test)
+    # print(f'Test loss: {loss}')
+    # print(f'Test accuracy: {accuracy}')
+
+    specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+    return test_acc, test_loss, specificity, sensitivity, f1
 
 
 
