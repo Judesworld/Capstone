@@ -274,8 +274,7 @@ if __name__ == "__main__":
     from data_filtration import filter_data_rand, filter_data_strat
     from visualize_data import visualize_results
 
-    print(len(X_train))
-    print(len(y_train))
+    print("There are "+str(len(X_train))+" training images and\n"+str(len(X_test))+" test images")
 
     # Reduce data by % randomly
     # X_train_rand, y_train_rand = filter_data_rand(X_train, y_train, 50)
@@ -685,7 +684,8 @@ if __name__ == "__main__":
                                                     y_train, 
                                                     X_test, 
                                                     y_test, 
-                                                    False)
+                                                    False,
+                                                    save_model=True)
     end = time.time()
     print(end - start)
 

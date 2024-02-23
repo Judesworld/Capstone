@@ -13,6 +13,8 @@ from data_filtration import resize_images, scale_data
 from keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.layers import Dropout
+from keras.callbacks import ReduceLROnPlateau
+import os
 
 
 # Evaluation metrics / functions
@@ -180,29 +182,17 @@ def train_efficientNet(X_train, y_train, X_test, y_test, resize, width=224, heig
 
 
 
-
-# Using the mobile net
-def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=224):
-
-    # Resize images if dimensions don't match expected input 
+def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=224, save_model=False):
     if resize:
         X_train = resize_images(X_train, width, height)
         X_test = resize_images(X_test, width, height)
 
-    ## Do some checking
-    # min_val = X_train.min()
-    # max_val = X_train.max()
-
-    X_test = X_test.astype('float32') / 255.0
-
-    # Import the model
-    base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-
+    base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(width, height, 3))
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
-    x = Dense(512, activation='relu')(x)  # Adjustable
+    x = Dense(512, activation='relu')(x)
     x = Dropout(0.5)(x)
-    predictions = Dense(3, activation='softmax')(x)  # Adjust '3' based on number of classes
+    predictions = Dense(3, activation='softmax')(x)
 
     model = Model(inputs=base_model.input, outputs=predictions)
 
@@ -213,37 +203,55 @@ def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=
                   loss='categorical_crossentropy', 
                   metrics=['accuracy'])
 
+    # Augment the data for training
+    datagen = ImageDataGenerator(rescale=1./255,
+                                 rotation_range=10, 
+                                 width_shift_range=0.2, 
+                                 height_shift_range=0.2,
+                                 shear_range=0.2, 
+                                 zoom_range=0.2, 
+                                 horizontal_flip=True, 
+                                 fill_mode='nearest')
+    
+    # Augment the data for testing
+    test_datagen = ImageDataGenerator(rescale=1./255)
+
     # Augment the data
-    datagen = ImageDataGenerator(
-        rescale=1./255,  # Rescale images to [0, 1]
-        rotation_range=10,  # Random rotations in the range (degrees, 0 to 180)
-        width_shift_range=0.2,  # Random horizontal shifts
-        height_shift_range=0.2,  # Random vertical shifts
-        shear_range=0.2,  # Shear transformations
-        zoom_range=0.2,  # Random zoom
-        horizontal_flip=True,  # Horizontal flips
-        fill_mode='nearest'  # Strategy used for filling in newly created pixels
-    )
-
     train_generator = datagen.flow(X_train, y_train, batch_size=32)
+    test_generator = test_datagen.flow(X_test, y_test, batch_size=32)
 
-    model.fit(train_generator, epochs=10, validation_data=(X_test, y_test))
+    # Reduce learning rate when validation loss has stopped improving
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001)
 
-    # Unfreeze the top layers of MobileNet
+    # Fit the model
+    model.fit(train_generator, epochs=10, validation_data=test_generator, callbacks=[reduce_lr])
+
+    # Unfreeze the top layers for fine-tuning
     for layer in base_model.layers[-10:]:
         layer.trainable = True
 
-    # Re-compile the modneel for fine-tuning
+    # Re-compile
     model.compile(optimizer=Adam(learning_rate=0.0001),
                   loss='categorical_crossentropy', 
                   metrics=['accuracy'])
 
-    # Continue training
-    model.fit(train_generator, epochs=10, validation_data=(X_test, y_test))
+    # Continue training with the updated model and learning rate
+    model.fit(train_generator, epochs=10, validation_data=test_generator, callbacks=[reduce_lr])
 
-    # Evaluation metrics
-    test_loss, test_acc = model.evaluate(X_test, y_test)
+    # Evaluation
+    test_loss, test_acc = model.evaluate(test_generator)
+
+    # Scale the test manually for simplicity 
+    X_test = X_test.astype('float32') / 255.0
     specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
 
+    # Save the model if save_model is True
+    if save_model:
+        model_save_path = os.path.join('saved_models', 'mobileNet_model.h5')
+        model.save(model_save_path)
+        print(f"Model saved to {model_save_path}")
+
     return test_acc, test_loss, specificity, sensitivity, f1
+
+
 
