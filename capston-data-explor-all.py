@@ -1,5 +1,7 @@
 import cv2 as cv 
 import numpy as np
+import tensorflow as tf
+from data_filtration import normalizeData, scale_data
 
 # Returns list of lists with either one or multiple lists
 def getData(num, multiple):
@@ -51,41 +53,6 @@ def getData(num, multiple):
 
         return [X_train, y_train, X_test, y_test], classes
 
-# Normalize all the data 
-def normalizeData(data, multiple):
-    output = []
-
-    if multiple:
-        print("\nNormalizing data within multiple tasks\n")
-
-        for i in range(len(data)):
-            X_train = data[i][0]
-            X_test = data[i][2]
-
-            # Normalize images
-            normalized_X_train = ((X_train - X_train.min()) / 
-                        (X_train.max() - X_train.min()) * 255).astype(np.uint8)
-            normalized_X_test = ((X_test - X_test.min()) / 
-                        (X_test.max() - X_test.min()) * 255).astype(np.uint8)
-
-            output.append([normalized_X_train, data[i][1], normalized_X_test, data[i][3]])
-
-    else:
-        print("\nNormalizing one task\n")
-
-        X_train = data[0]
-        X_test = data[2]
-
-        # Normalize images
-        normalized_X_train = ((X_train - X_train.min()) / 
-                        (X_train.max() - X_train.min()) * 255).astype(np.uint8)
-        normalized_X_test = ((X_test - X_test.min()) / 
-                        (X_test.max() - X_test.min()) * 255).astype(np.uint8)
-
-        output = [normalized_X_train, data[1], normalized_X_test, data[3]]
-
-    return output
-
 # Helper Functions - Generate subsets
 def create_subsets(classes):
     subsets = {}
@@ -104,6 +71,7 @@ def create_subsets(classes):
 
     return subsets
 
+# Divide the data up
 def divide(data, multiple, classes):
     def label_to_binary_str(label):
         return ''.join(str(int(bit)) for bit in label)
@@ -169,6 +137,7 @@ def generate_image_grid(data, start_idx, num_images, rows, cols, image_height, i
                        col * image_width:(col + 1) * image_width] = data[idx]
     return grid_image
 
+# Generate a grid for the images to display
 def display_images_in_grid(subsets, num_images, rows, cols):
     for subset_name, images in subsets.items():
         if len(images) == 0:
@@ -199,12 +168,7 @@ def visualize_results(result, num_images, rows, cols):
     else:  # Single task scenario
         display_images_in_grid(result, num_images, rows, cols)
 
-def resize_images(data, width, height):
-    resized_data = np.empty((data.shape[0], height, width, data.shape[3]))
-    for i, img in enumerate(data):
-        resized_data[i] = cv.resize(img, (width, height))
-    return resized_data
-
+# Test code to run the experiment
 def run_experiment(X_train, y_train, X_test, y_test, train_sizes, split_func, model):
     """
     Runs model training experiments over different train sizes using specified split function.
@@ -475,44 +439,44 @@ if __name__ == "__main__":
     Uncomment below to open the pickle file and get data
     """
 
-    # Get results from mobile net pickle file
-    with open('results-resnet50-1.pkl', 'rb') as f:
-        loaded_results = pickle.load(f)
+    # # Get results from mobile net pickle file
+    # with open('results-resnet50-1.pkl', 'rb') as f:
+    #     loaded_results = pickle.load(f)
 
-    results1_rn = loaded_results['results1']
-    results2_rn = loaded_results['results2']
+    # results1_rn = loaded_results['results1']
+    # results2_rn = loaded_results['results2']
 
-    training_times_res1 = results1_rn['training_times']
-    test_accuracies_res1 = results1_rn['test_accuracies']
-    test_losses_res1 = results1_rn['test_losses']
-    sensitivity_scores_res1 = results1_rn['sensitivity']
-    specificity_scores_res1 = results1_rn['specificity']
-    f1_scores_res1 = results1_rn['f1_scores']
+    # training_times_res1 = results1_rn['training_times']
+    # test_accuracies_res1 = results1_rn['test_accuracies']
+    # test_losses_res1 = results1_rn['test_losses']
+    # sensitivity_scores_res1 = results1_rn['sensitivity']
+    # specificity_scores_res1 = results1_rn['specificity']
+    # f1_scores_res1 = results1_rn['f1_scores']
 
-    training_times_res2 = results2_rn['training_times']
-    test_accuracies_res2 = results2_rn['test_accuracies']
-    test_losses_res2 = results2_rn['test_losses']
-    sensitivity_scores_res2 = results2_rn['sensitivity']
-    specificity_scores_res2 = results2_rn['specificity']
-    f1_scores_res2 = results2_rn['f1_scores']
+    # training_times_res2 = results2_rn['training_times']
+    # test_accuracies_res2 = results2_rn['test_accuracies']
+    # test_losses_res2 = results2_rn['test_losses']
+    # sensitivity_scores_res2 = results2_rn['sensitivity']
+    # specificity_scores_res2 = results2_rn['specificity']
+    # f1_scores_res2 = results2_rn['f1_scores']
 
-    # Pass the extracted metrics to the visualize_results function
-    visualize_results(training_sizes, 
-                    training_times_res1, 
-                    test_accuracies_res1, 
-                    test_losses_res1, 
-                    sensitivity_scores_res1, 
-                    specificity_scores_res1, 
-                    f1_scores_res1)
+    # # Pass the extracted metrics to the visualize_results function
+    # visualize_results(training_sizes, 
+    #                 training_times_res1, 
+    #                 test_accuracies_res1, 
+    #                 test_losses_res1, 
+    #                 sensitivity_scores_res1, 
+    #                 specificity_scores_res1, 
+    #                 f1_scores_res1)
     
-    # Pass the extracted metrics to the visualize_results function
-    visualize_results(training_sizes, 
-                    training_times_res2, 
-                    test_accuracies_res2, 
-                    test_losses_res2, 
-                    sensitivity_scores_res2, 
-                    specificity_scores_res2, 
-                    f1_scores_res2)
+    # # Pass the extracted metrics to the visualize_results function
+    # visualize_results(training_sizes, 
+    #                 training_times_res2, 
+    #                 test_accuracies_res2, 
+    #                 test_losses_res2, 
+    #                 sensitivity_scores_res2, 
+    #                 specificity_scores_res2, 
+    #                 f1_scores_res2)
 
     ########################################################
     ################ Run the EfficientNetB0 ################
@@ -706,4 +670,23 @@ if __name__ == "__main__":
     #                 f1_scores_mbnet2)
 
 
+    # Making improvements to the model:
+    # X_train
+    # X_test
+    # y_train
+    # y_test
+    
+    # Scale the data between 0-1
+    # X_train, X_test = scale_data(X_train, X_test)
 
+    start = time.time()
+    (test_acc, test_loss,
+    specificity, sensitivity, f1) = train_mobileNet(X_train, 
+                                                    y_train, 
+                                                    X_test, 
+                                                    y_test, 
+                                                    False)
+    end = time.time()
+    print(end - start)
+
+    print(test_acc, test_loss,"\n", specificity,"\n", sensitivity,"\n", f1)
