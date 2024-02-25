@@ -1,7 +1,7 @@
 import cv2 as cv 
 import numpy as np
 import tensorflow as tf
-from data_filtration import normalizeData, scale_data
+from data_filtration import normalizeData
 
 # Returns list of lists with either one or multiple lists
 def getData(num, multiple):
@@ -668,8 +668,13 @@ if __name__ == "__main__":
     #                 specificity_scores_mbnet2, 
     #                 f1_scores_mbnet2)
 
-
-    # Making improvements to the model:
+    ############################################################
+    ############################################################
+    ############################################################
+    ############################################################
+    ############################################################
+    ############################################################
+    # Making improvements to the models:
     # X_train
     # X_test
     # y_train
@@ -678,15 +683,62 @@ if __name__ == "__main__":
     # Scale the data between 0-1
     # X_train, X_test = scale_data(X_train, X_test)
 
+    # MobileNet
+    # start = time.time()
+    # (test_acc, test_loss,
+    # specificity, sensitivity, f1) = train_mobileNet(X_train, 
+    #                                                 y_train, 
+    #                                                 X_test, 
+    #                                                 y_test, 
+    #                                                 False,
+    #                                                 save_model=True)
+    # end = time.time()
+    # print(end - start)
+
+    # print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
+    # print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
+
+    # EfficientNetB0
+    # start = time.time()
+    # (test_acc, test_loss,
+    # specificity, sensitivity, f1) = train_efficientNet(X_train, 
+    #                                                    y_train, 
+    #                                                    X_test, 
+    #                                                    y_test, 
+    #                                                    False,
+    #                                                    save_model=False)
+    # end = time.time()
+    # print(end - start)
+
+    # print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
+    # print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
+
+    # Inception v3
+    # start = time.time()
+    # (test_acc, test_loss,
+    # specificity, sensitivity, f1) = train_inception_v3(X_train, 
+    #                                                    y_train, 
+    #                                                    X_test, 
+    #                                                    y_test, 
+    #                                                    True,
+    #                                                    save_model=True)
+    # end = time.time()
+    # print(end - start)
+
+    # print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
+    # print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
+
+    # ResNet-50
     start = time.time()
     (test_acc, test_loss,
-    specificity, sensitivity, f1) = train_mobileNet(X_train, 
-                                                    y_train, 
-                                                    X_test, 
-                                                    y_test, 
-                                                    False,
-                                                    save_model=True)
+    specificity, sensitivity, f1) = train_resnet50(X_train, 
+                                                   y_train, 
+                                                   X_test, 
+                                                   y_test, 
+                                                   False,
+                                                   save_model=True)
     end = time.time()
     print(end - start)
 
-    print(test_acc, test_loss,"\n", specificity,"\n", sensitivity,"\n", f1)
+    print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
+    print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
