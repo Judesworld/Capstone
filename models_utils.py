@@ -17,12 +17,16 @@ from keras.callbacks import ReduceLROnPlateau
 import os
 from sklearn.model_selection import train_test_split
 
+from visualize_data import plot_confusion_matrix
+
 
 # Evaluation metrics for multi class specificity and sensitvity
 def calculate_specificity_sensitivity_f1(y_true, y_pred):
     # Calculate confusion matrix
     cm = confusion_matrix(y_true, y_pred)
-    print(cm)
+
+    class_names = ['Class 0', 'Class 1', 'Class 2']
+    plot_confusion_matrix(cm, class_names)
 
     sensitivity = {}
     specificity = {}

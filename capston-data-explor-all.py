@@ -729,16 +729,17 @@ if __name__ == "__main__":
     # print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
 
     # ResNet-50
-    start = time.time()
-    (test_acc, test_loss,
-    specificity, sensitivity, f1) = train_resnet50(X_train, 
-                                                   y_train, 
-                                                   X_test, 
-                                                   y_test, 
-                                                   False,
-                                                   save_model=True)
-    end = time.time()
-    print(end - start)
+    # start = time.time()
+    # (test_acc, test_loss,
+    # specificity, sensitivity, f1) = train_resnet50(X_train, 
+    #                                                y_train, 
+    #                                                X_test, 
+    #                                                y_test, 
+    #                                                False,
+    #                                                save_model=True)
+    # end = time.time()
+    # print(end - start)
 
-    print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
-    print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
+    # print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
+    # print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
+
