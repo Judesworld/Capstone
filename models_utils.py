@@ -6,7 +6,7 @@ from keras.applications import InceptionV3, ResNet50, EfficientNetB0
 from keras.applications.mobilenet import MobileNet
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.models import Model, Sequential
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 import numpy as np
 import cv2 as cv
 from data_filtration import resize_images, scale_data
@@ -70,6 +70,39 @@ def evaluate_model_performance(model, X_test, y_test):
 
     return specificity, sensitivity, f1_score
 
+def evaluate_model_performance_binary(model, X_test, y_test):
+    # Generate predictions
+    y_pred_probs = model.predict(X_test)
+    
+    # Convert predicted probabilities to binary predictions
+    y_pred = np.argmax(y_pred_probs, axis=-1)
+
+    # Convert y_test to binary format
+    # Assuming that y_test is one-hot encoded and the positive class is the first column (index 0)
+    y_test_binary = np.argmax(y_test, axis=-1)
+    
+    # Calculate confusion matrix
+    cm = confusion_matrix(y_test_binary, y_pred)
+    # True Positives
+    TP = cm[1, 1]
+    # True Negatives
+    TN = cm[0, 0]
+    # False Positives
+    FP = cm[0, 1]
+    # False Negatives
+    FN = cm[1, 0]
+
+    # Sensitivity, hit rate, recall, or true positive rate
+    sensitivity = TP / (TP + FN)
+    # Specificity or true negative rate
+    specificity = TN / (TN + FP)
+    # F1 score
+    f1 = f1_score(y_test_binary, y_pred)
+
+    class_names = ['Class 0', 'Class 1']
+    plot_confusion_matrix(cm, class_names)
+
+    return specificity, sensitivity, f1
 
 # Models 
 # Using the inception v3 model 
@@ -356,7 +389,11 @@ def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=
 
     # Scale the test manually for simplicity 
     X_test = X_test.astype('float32') / 255.0
-    specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+
+    if len(y_test) == 3:
+        specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+    else:
+        specificity, sensitivity, f1 = evaluate_model_performance_binary(model, X_test, y_test)
 
     # Save the model if save_model is True
     if save_model:
@@ -367,4 +404,95 @@ def train_mobileNet(X_train, y_train, X_test, y_test, resize, width=224, height=
     return test_acc, test_loss, specificity, sensitivity, f1
 
 
+def train_mobileNet2(X_train, y_train, X_test, y_test, resize, width=224, height=224, save_model=False):
+    print("\n****** Running MobileNet BINARY [01] ******")
 
+    # If resize needed (no for main data)
+    if resize:
+        X_train = resize_images(X_train, width, height)
+        X_test = resize_images(X_test, width, height)
+
+    # Split the data up to get a validation set
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+    # Create the model with functional api
+    base_model = MobileNet(weights='imagenet',
+                          include_top=False, 
+                          input_shape=(width, height, 3))
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(512, activation='relu')(x)
+    x = Dropout(0.5)(x)
+
+    # Here using softmax which gives probabilities
+    # Use sigmoid or something to get rid of the probabilities 
+    predictions = Dense(2, activation='softmax')(x)
+
+    model = Model(inputs=base_model.input, outputs=predictions)
+
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    model.compile(optimizer=Adam(learning_rate=0.0001),
+                  loss='binary_crossentropy', 
+                  metrics=['accuracy'])
+
+    # Augment the data for training
+    datagen = ImageDataGenerator(rescale=1./255,
+                                 rotation_range=10, 
+                                 width_shift_range=0.2, 
+                                 height_shift_range=0.2,
+                                 shear_range=0.2, 
+                                 zoom_range=0.2, 
+                                 horizontal_flip=True, 
+                                 fill_mode='nearest')
+    
+    # Augment the data for testing
+    test_datagen = ImageDataGenerator(rescale=1./255)
+
+    # Augment the data
+    train_generator = datagen.flow(X_train, y_train, batch_size=32)
+    test_generator = test_datagen.flow(X_test, y_test, batch_size=32)
+
+    # Reduce learning rate when validation loss has stopped improving
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001)
+
+    # Fit the model
+    model.fit(train_generator, 
+              epochs=10, 
+              validation_data=(X_val, y_val), 
+              callbacks=[reduce_lr])
+
+    # Unfreeze the top layers for fine-tuning
+    for layer in base_model.layers[-10:]:
+        layer.trainable = True
+
+    # Re-compile
+    model.compile(optimizer=Adam(learning_rate=0.0001),
+                  loss='binary_crossentropy', 
+                  metrics=['accuracy'])
+
+    # Continue training with the updated model and learning rate
+    model.fit(train_generator, 
+              epochs=10, 
+              validation_data=(X_val, y_val), 
+              callbacks=[reduce_lr])
+
+    # Evaluation
+    test_loss, test_acc = model.evaluate(test_generator)
+
+    # Scale the test manually for simplicity 
+    X_test = X_test.astype('float32') / 255.0
+
+    if len(y_test) == 3:
+        specificity, sensitivity, f1 = evaluate_model_performance(model, X_test, y_test)
+    else:
+        specificity, sensitivity, f1 = evaluate_model_performance_binary(model, X_test, y_test)
+
+    # Save the model if save_model is True
+    if save_model:
+        model_save_path = os.path.join('saved_models', 'mobileNet_model.h5')
+        model.save(model_save_path)
+        print(f"Model saved to {model_save_path}")
+
+    return test_acc, test_loss, specificity, sensitivity, f1

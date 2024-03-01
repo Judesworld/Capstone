@@ -743,3 +743,23 @@ if __name__ == "__main__":
     # print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
     # print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
 
+
+    from data_filtration import makeDataBinary
+    from models_utils import train_mobileNet2
+
+    y_train_binary, y_test_binary = makeDataBinary(y_train, y_test)
+
+    # MobileNet - Binary
+    start = time.time()
+    (test_acc, test_loss,
+    specificity, sensitivity, f1) = train_mobileNet2(X_train, 
+                                                    y_train_binary, 
+                                                    X_test, 
+                                                    y_test_binary, 
+                                                    False,
+                                                    save_model=True)
+    end = time.time()
+    print(end - start)
+
+    print(f"Test loss: {test_loss} \nTest accuracy: {test_acc}\n")
+    print(f"Specificity: {specificity} \nSensitivity: {sensitivity} \nF1 Score: {f1}")
